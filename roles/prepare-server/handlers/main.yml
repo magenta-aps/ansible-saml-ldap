@@ -1,0 +1,5 @@
+---
+# handlers file for prepare-server
+
+- name: reboot server
+  command: /sbin/reboot

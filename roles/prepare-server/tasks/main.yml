@@ -1,0 +1,28 @@
+---
+# tasks file for prepare-server
+
+- name: Install aptitude
+  apt:
+    name: aptitude
+    state: present
+
+- name: Update and upgrade all packages
+  apt:
+    upgrade: full
+    update_cache: true
+  when: upgrade is defined and upgrade in ["true", "yes", "y"]
+  notify:
+    restart server
+  tags:
+    - upgrade
+
+- name: Install handy packages
+  apt:
+    name: "{{item}}"
+    state: present
+  with_items:
+    - vim
+    - nmap
+    - curl
+    - lsof
+    - acl

@@ -1,0 +1,59 @@
+---
+# tasks file for openldap
+
+- name: Install an OpenLDAP server and LDAP utils
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - slapd
+    - ldap-utils
+  tags:
+    - slapd
+
+# TODO: put the passwords below in vault files if needed
+
+- name: Reconfigure slapd
+  debconf:
+    name: slapd
+    question: "{{ item.question }}"
+    value: "{{ item.value }}"
+    vtype: "{{ item.vtype }}"
+  with_items:
+    - { question: 'slapd/password1', value: '1234', vtype: 'string'}
+    - { question: 'slapd/password2', value: '1234', vtype: 'string'}
+    - { question: 'slapd/internal/adminpw', value: '1234', vtype: 'string'}
+    - { question: 'slapd/internal/adminpw', value: '1234', vtype: 'string'}
+#    - { question: 'slapd/internal/generated_adminpw', value: '1234', vtype: 'string'}
+
+    - { question: 'slapd/invalid_config', value: True, vtype: 'boolean'}
+    - { question: 'slapd/dump_database', value: 'when needed', vtype: 'string'}
+    - { question: 'slapd/purge_database', value: True, vtype: 'boolean'}
+    - { question: 'slapd/move_old_database', value: True, vtype: 'boolean'}
+    - { question: 'shared/organization', value: 'Hollywood', vtype: 'string'}
+    - { question: 'slapd/backend', value: 'HDB', vtype: 'string' }
+    - { question: 'slapd/dump_database_destdir', value: '/var/backups/slapd-VERSION', vtype: 'string' }
+    - { question: 'slapd/no_configuration', value: False, vtype: 'boolean'}
+    - { question: 'slapd/domain', value: 'example.org', vtype: 'string'}
+    - { question: 'slapd/allow_ldap_v2', value: False, vtype: 'boolean'}
+#  notify:
+#    - restart slapd
+  tags:
+    - slapd_reconfigure
+
+- name: restart slapd
+  service:
+    name: slapd
+    state: restarted
+
+- name: Copy LDIF with users and groups to server
+  copy:
+    src: hollywood.ldif
+    dest: /tmp/hollywood.ldif
+  tags:
+    - ldif
+
+- name: Add LDIF users and groups to slapd
+  command: 'ldapadd -x -D "cn=admin,dc=example,dc=org" -w 1234 -f /tmp/hollywood.ldif'
+  tags:
+    - ldapadd

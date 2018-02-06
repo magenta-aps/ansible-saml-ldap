@@ -1,0 +1,6 @@
+### Playbook for install a SAML IdP with an integrated LDAP-server
+
+- hosts: ubuntu
+  roles:
+    - prepare-server
+    - openldap
